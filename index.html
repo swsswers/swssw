@@ -6,7 +6,7 @@
     <title>太空探索政策模拟游戏</title>
     <style>
         body {
-            font-family: 'Arial', 'Microsoft YaHei', 'SimSun', 'PingFang SC', 'WenQuanYi Micro Hei', sans-serif;
+            font-family: Arial, sans-serif;
             text-align: center;
             background-color: #1a1a2e;
             color: #e94560;
@@ -36,10 +36,20 @@
         #status, #policies {
             margin: 20px 0;
         }
-        #policies button {
+        #policies label {
             display: block;
-            width: 80%;
-            margin: 10px auto;
+            margin: 5px 0;
+            color: #fff;
+        }
+        #execute-button {
+            background-color: #4CAF50;
+        }
+        #execute-button:hover {
+            background-color: #45a049;
+        }
+        #result {
+            color: #fff;
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -47,78 +57,101 @@
     <div id="game-container">
         <h1>太空探索政策模拟</h1>
         <div id="status">
-            <p>年份: <span id="year">1</span>/10</p>
+            <p>回合: <span id="turn">1</span></p>
             <p>资金: <span id="money">100</span></p>
             <p>能源: <span id="energy">100</span></p>
             <p>科技点: <span id="tech">0</span></p>
-            <p>殖民进度: <span id="progress">0</span>%</p>
         </div>
         <div id="policies">
-            <h2>选择一项政策</h2>
-            <button onclick="applyPolicy(0)">增加资金投入（+50资金，-20能源）</button>
-            <button onclick="applyPolicy(1)">研发新能源（+30能源，+10科技，-30资金）</button>
-            <button onclick="applyPolicy(2)">推进科技研究（+20科技，-20资金，-10能源）</button>
+            <h2>选择政策（最多5个）</h2>
+            <!-- 政策选项将动态生成 -->
         </div>
-        <div id="message"></div>
+        <button id="execute-button" onclick="executePolicies()">执行政策</button>
+        <div id="result"></div>
     </div>
 
     <script>
+        // 游戏状态初始化
         let gameState = {
-            year: 1,
+            turn: 1,
             money: 100,
             energy: 100,
-            tech: 0,
-            progress: 0
+            tech: 0
         };
 
-        const policies = [
-            { name: "增加资金投入", money: 50, energy: -20, tech: 0 },
-            { name: "研发新能源", money: -30, energy: 30, tech: 10 },
-            { name: "推进科技研究", money: -20, energy: -10, tech: 20 }
-        ];
+        // 初始生成30个政策
+        let policies = generatePolicies();
 
-        function updateDisplay() {
-            document.getElementById("year").textContent = gameState.year;
-            document.getElementById("money").textContent = gameState.money;
-            document.getElementById("energy").textContent = gameState.energy;
-            document.getElementById("tech").textContent = gameState.tech;
-            document.getElementById("progress").textContent = gameState.progress;
+        // 生成政策的函数
+        function generatePolicies() {
+            let policies = [];
+            for (let i = 0; i < 30; i++) {
+                policies.push({
+                    name: `政策 ${i + 1}`,
+                    effect: {
+                        money: Math.floor(Math.random() * 50) - 20, // 随机效果：-20到29
+                        energy: Math.floor(Math.random() * 50) - 20,
+                        tech: Math.floor(Math.random() * 20)       // 0到19
+                    },
+                    description: `政策 ${i + 1} 的效果`
+                });
+            }
+            return policies;
         }
 
-        function applyPolicy(policyIndex) {
-            const policy = policies[policyIndex];
-            const newMoney = gameState.money + policy.money;
-            const newEnergy = gameState.energy + policy.energy;
+        // 渲染政策选项到页面
+        function renderPolicies() {
+            let policiesDiv = document.getElementById("policies");
+            policiesDiv.innerHTML = "<h2>选择政策（最多5个）</h2>";
+            policies.forEach((policy, index) => {
+                let label = document.createElement("label");
+                label.innerHTML = `<input type="checkbox" value="${index}"> ${policy.name} (资金: ${policy.effect.money}, 能源: ${policy.effect.energy}, 科技: ${policy.effect.tech})`;
+                policiesDiv.appendChild(label);
+            });
+        }
 
-            if (newMoney < 0 || newEnergy < 0) {
-                document.getElementById("message").textContent = "资源不足，政策执行失败！请重新选择。";
+        // 执行选中的政策
+        function executePolicies() {
+            let selectedPolicies = Array.from(document.querySelectorAll("#policies input:checked"))
+                .map(input => parseInt(input.value));
+
+            // 检查选择数量
+            if (selectedPolicies.length > 5) {
+                alert("最多只能选择5个政策！");
                 return;
             }
 
-            gameState.money = newMoney;
-            gameState.energy = newEnergy;
-            gameState.tech += policy.tech;
-            gameState.progress = Math.min(100, gameState.progress + gameState.tech / 10);
-            gameState.year++;
+            // 计算并显示执行结果
+            let result = "执行结果：<br>";
+            selectedPolicies.forEach(index => {
+                let policy = policies[index];
+                gameState.money += policy.effect.money;
+                gameState.energy += policy.effect.energy;
+                gameState.tech += policy.effect.tech;
+                result += `${policy.name}: 资金 ${policy.effect.money}, 能源 ${policy.effect.energy}, 科技 ${policy.effect.tech}<br>`;
+            });
 
-            if (gameState.year > 10) {
-                endGame();
-            } else {
-                updateDisplay();
-                document.getElementById("message").textContent = `已执行政策：${policy.name}`;
-            }
+            // 推进回合并更新政策
+            gameState.turn++;
+            policies = generatePolicies(); // 生成新的30个政策
+            renderPolicies();
+            updateDisplay();
+            document.getElementById("result").innerHTML = result;
+
+            // 自动滚动到顶部（可选）
+            window.scrollTo(0, 0);
         }
 
-        function endGame() {
-            let message = "";
-            if (gameState.progress >= 100) {
-                message = "恭喜！你成功殖民火星，太空探索大获成功！";
-            } else {
-                message = `游戏结束！殖民进度仅达到${gameState.progress}%，任务失败。`;
-            }
-            document.getElementById("game-container").innerHTML = `<h1>${message}</h1>`;
+        // 更新界面上的状态显示
+        function updateDisplay() {
+            document.getElementById("turn").textContent = gameState.turn;
+            document.getElementById("money").textContent = gameState.money;
+            document.getElementById("energy").textContent = gameState.energy;
+            document.getElementById("tech").textContent = gameState.tech;
         }
 
+        // 初始化游戏
+        renderPolicies();
         updateDisplay();
     </script>
 </body>
