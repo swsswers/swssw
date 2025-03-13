@@ -1,0 +1,131 @@
+<meta charset="UTF-8">
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>太空探索政策模拟游戏</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #1a1a2e;
+            color: #e94560;
+            margin: 0;
+            padding: 20px;
+        }
+        #game-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #16213e;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        button {
+            background-color: #e94560;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #ff6b6b;
+        }
+        #status, #policies {
+            margin: 20px 0;
+        }
+        #policies button {
+            display: block;
+            width: 80%;
+            margin: 10px auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>太空探索政策模拟</h1>
+        <div id="status">
+            <p>年份: <span id="year">1</span>/10</p>
+            <p>资金: <span id="money">100</span></p>
+            <p>能源: <span id="energy">100</span></p>
+            <p>科技点: <span id="tech">0</span></p>
+            <p>殖民进度: <span id="progress">0</span>%</p>
+        </div>
+        <div id="policies">
+            <h2>选择一项政策</h2>
+            <button onclick="applyPolicy(0)">增加资金投入（+50资金，-20能源）</button>
+            <button onclick="applyPolicy(1)">研发新能源（+30能源，+10科技，-30资金）</button>
+            <button onclick="applyPolicy(2)">推进科技研究（+20科技，-20资金，-10能源）</button>
+        </div>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        let gameState = {
+            year: 1,
+            money: 100,
+            energy: 100,
+            tech: 0,
+            progress: 0
+        };
+
+        const policies = [
+            { name: "增加资金投入", money: 50, energy: -20, tech: 0 },
+            { name: "研发新能源", money: -30, energy: 30, tech: 10 },
+            { name: "推进科技研究", money: -20, energy: -10, tech: 20 }
+        ];
+
+        function updateDisplay() {
+            document.getElementById("year").textContent = gameState.year;
+            document.getElementById("money").textContent = gameState.money;
+            document.getElementById("energy").textContent = gameState.energy;
+            document.getElementById("tech").textContent = gameState.tech;
+            document.getElementById("progress").textContent = gameState.progress;
+        }
+
+        function applyPolicy(policyIndex) {
+            const policy = policies[policyIndex];
+            gameState.money += policy.money;
+            gameState.energy += policy.energy;
+            gameState.tech += policy.tech;
+
+            // 防止资源为负
+            if (gameState.money < 0 || gameState.energy < 0) {
+                gameState.money = Math.max(0, gameState.money);
+                gameState.energy = Math.max(0, gameState.energy);
+                alert("资源不足，政策执行失败！");
+                return;
+            }
+
+            // 更新殖民进度
+            gameState.progress = Math.min(100, gameState.progress + gameState.tech / 10);
+            gameState.year++;
+
+            // 检查游戏结束
+            if (gameState.year > 10) {
+                endGame();
+            } else {
+                updateDisplay();
+                document.getElementById("message").textContent = `已执行政策：${policy.name}`;
+            }
+        }
+
+        function endGame() {
+            let message = "";
+            if (gameState.progress >= 100) {
+                message = "恭喜！你成功殖民火星，太空探索大获成功！";
+            } else {
+                message = `游戏结束！殖民进度仅达到${gameState.progress}%，任务失败。`;
+            }
+            document.getElementById("game-container").innerHTML = `<h1>${message}</h1>`;
+        }
+
+        // 初始化显示
+        updateDisplay();
+    </script>
+</body>
+</html>
