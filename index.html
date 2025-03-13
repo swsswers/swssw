@@ -1,14 +1,12 @@
-<meta charset="UTF-8">
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ì«¿ÕÌ½Ë÷Õş²ßÄ£ÄâÓÎÏ·</title>
+    <title>å¤ªç©ºæ¢ç´¢æ”¿ç­–æ¨¡æ‹Ÿæ¸¸æˆ</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Arial', 'Microsoft YaHei', 'SimSun', sans-serif;
             text-align: center;
             background-color: #1a1a2e;
             color: #e94560;
@@ -47,19 +45,19 @@
 </head>
 <body>
     <div id="game-container">
-        <h1>Ì«¿ÕÌ½Ë÷Õş²ßÄ£Äâ</h1>
+        <h1>å¤ªç©ºæ¢ç´¢æ”¿ç­–æ¨¡æ‹Ÿ</h1>
         <div id="status">
-            <p>Äê·İ: <span id="year">1</span>/10</p>
-            <p>×Ê½ğ: <span id="money">100</span></p>
-            <p>ÄÜÔ´: <span id="energy">100</span></p>
-            <p>¿Æ¼¼µã: <span id="tech">0</span></p>
-            <p>Ö³Ãñ½ø¶È: <span id="progress">0</span>%</p>
+            <p>å¹´ä»½: <span id="year">1</span>/10</p>
+            <p>èµ„é‡‘: <span id="money">100</span></p>
+            <p>èƒ½æº: <span id="energy">100</span></p>
+            <p>ç§‘æŠ€ç‚¹: <span id="tech">0</span></p>
+            <p>æ®–æ°‘è¿›åº¦: <span id="progress">0</span>%</p>
         </div>
         <div id="policies">
-            <h2>Ñ¡ÔñÒ»ÏîÕş²ß</h2>
-            <button onclick="applyPolicy(0)">Ôö¼Ó×Ê½ğÍ¶Èë£¨+50×Ê½ğ£¬-20ÄÜÔ´£©</button>
-            <button onclick="applyPolicy(1)">ÑĞ·¢ĞÂÄÜÔ´£¨+30ÄÜÔ´£¬+10¿Æ¼¼£¬-30×Ê½ğ£©</button>
-            <button onclick="applyPolicy(2)">ÍÆ½ø¿Æ¼¼ÑĞ¾¿£¨+20¿Æ¼¼£¬-20×Ê½ğ£¬-10ÄÜÔ´£©</button>
+            <h2>é€‰æ‹©ä¸€é¡¹æ”¿ç­–</h2>
+            <button onclick="applyPolicy(0)">å¢åŠ èµ„é‡‘æŠ•å…¥ï¼ˆ+50èµ„é‡‘ï¼Œ-20èƒ½æºï¼‰</button>
+            <button onclick="applyPolicy(1)">ç ”å‘æ–°èƒ½æºï¼ˆ+30èƒ½æºï¼Œ+10ç§‘æŠ€ï¼Œ-30èµ„é‡‘ï¼‰</button>
+            <button onclick="applyPolicy(2)">æ¨è¿›ç§‘æŠ€ç ”ç©¶ï¼ˆ+20ç§‘æŠ€ï¼Œ-20èµ„é‡‘ï¼Œ-10èƒ½æºï¼‰</button>
         </div>
         <div id="message"></div>
     </div>
@@ -74,9 +72,9 @@
         };
 
         const policies = [
-            { name: "Ôö¼Ó×Ê½ğÍ¶Èë", money: 50, energy: -20, tech: 0 },
-            { name: "ÑĞ·¢ĞÂÄÜÔ´", money: -30, energy: 30, tech: 10 },
-            { name: "ÍÆ½ø¿Æ¼¼ÑĞ¾¿", money: -20, energy: -10, tech: 20 }
+            { name: "å¢åŠ èµ„é‡‘æŠ•å…¥", money: 50, energy: -20, tech: 0 },
+            { name: "ç ”å‘æ–°èƒ½æº", money: -30, energy: 30, tech: 10 },
+            { name: "æ¨è¿›ç§‘æŠ€ç ”ç©¶", money: -20, energy: -10, tech: 20 }
         ];
 
         function updateDisplay() {
@@ -89,42 +87,38 @@
 
         function applyPolicy(policyIndex) {
             const policy = policies[policyIndex];
-            gameState.money += policy.money;
-            gameState.energy += policy.energy;
-            gameState.tech += policy.tech;
+            const newMoney = gameState.money + policy.money;
+            const newEnergy = gameState.energy + policy.energy;
 
-            // ·ÀÖ¹×ÊÔ´Îª¸º
-            if (gameState.money < 0 || gameState.energy < 0) {
-                gameState.money = Math.max(0, gameState.money);
-                gameState.energy = Math.max(0, gameState.energy);
-                alert("×ÊÔ´²»×ã£¬Õş²ßÖ´ĞĞÊ§°Ü£¡");
+            if (newMoney < 0 || newEnergy < 0) {
+                document.getElementById("message").textContent = "èµ„æºä¸è¶³ï¼Œæ”¿ç­–æ‰§è¡Œå¤±è´¥ï¼è¯·é‡æ–°é€‰æ‹©ã€‚";
                 return;
             }
 
-            // ¸üĞÂÖ³Ãñ½ø¶È
+            gameState.money = newMoney;
+            gameState.energy = newEnergy;
+            gameState.tech += policy.tech;
             gameState.progress = Math.min(100, gameState.progress + gameState.tech / 10);
             gameState.year++;
 
-            // ¼ì²éÓÎÏ·½áÊø
             if (gameState.year > 10) {
                 endGame();
             } else {
                 updateDisplay();
-                document.getElementById("message").textContent = `ÒÑÖ´ĞĞÕş²ß£º${policy.name}`;
+                document.getElementById("message").textContent = `å·²æ‰§è¡Œæ”¿ç­–ï¼š${policy.name}`;
             }
         }
 
         function endGame() {
             let message = "";
             if (gameState.progress >= 100) {
-                message = "¹§Ï²£¡Äã³É¹¦Ö³Ãñ»ğĞÇ£¬Ì«¿ÕÌ½Ë÷´ó»ñ³É¹¦£¡";
+                message = "æ­å–œï¼ä½ æˆåŠŸæ®–æ°‘ç«æ˜Ÿï¼Œå¤ªç©ºæ¢ç´¢å¤§è·æˆåŠŸï¼";
             } else {
-                message = `ÓÎÏ·½áÊø£¡Ö³Ãñ½ø¶È½ö´ïµ½${gameState.progress}%£¬ÈÎÎñÊ§°Ü¡£`;
+                message = `æ¸¸æˆç»“æŸï¼æ®–æ°‘è¿›åº¦ä»…è¾¾åˆ°${gameState.progress}%ï¼Œä»»åŠ¡å¤±è´¥ã€‚`;
             }
             document.getElementById("game-container").innerHTML = `<h1>${message}</h1>`;
         }
 
-        // ³õÊ¼»¯ÏÔÊ¾
         updateDisplay();
     </script>
 </body>
