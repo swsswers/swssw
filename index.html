@@ -1,222 +1,117 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>太空探索政策模拟器</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #0f0f23;
-            color: #e0e0e0;
-            margin: 0;
-            padding: 20px;
-        }
-        #game-container {
-            max-width: 900px;
-            margin: 0 auto;
-            background-color: #1a1a3b;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
-        }
-        h1, h2 {
-            color: #00d4ff;
-        }
-        button {
-            background-color: #00d4ff;
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            margin: 5px;
-            cursor: pointer;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-        button:hover {
-            background-color: #00b4d8;
-        }
-        button:disabled {
-            background-color: #555;
-            cursor: not-allowed;
-        }
-        #status, #policies, #result {
-            margin: 20px 0;
-        }
-        #policies label {
-            display: block;
-            margin: 10px 0;
-            padding: 10px;
-            background-color: #2a2a5a;
-            border-radius: 5px;
-        }
-        #result {
-            color: #fff;
-            line-height: 1.5;
-        }
-        .resource {
-            font-weight: bold;
-        }
-        .increase { color: #00ff00; }
-        .decrease { color: #ff4444; }
-        .warning { color: #ffcc00; }
-    </style>
-</head>
-<body>
-    <div id="game-container">
-        <h1>太空探索政策模拟器</h1>
-        <div id="status">
-            <p>回合: <span id="turn">1</span></p>
-            <p>资金: <span id="money">200</span></p>
-            <p>能源: <span id="energy">150</span></p>
-            <p>科技点: <span id="tech">0</span></p>
-            <p>人口: <span id="population">5000</span></p>
-            <p>环境支持度: <span id="environment">100</span></p>
-            <p>基础设施: <span id="infrastructure">100</span></p>
-            <p>国际声望: <span id="reputation">50</span></p>
-        </div>
-        <div id="policies">
-            <h2>选择政策（最多3个）</h2>
-            <!-- 政策选项将动态生成 -->
-        </div>
-        <button id="execute-button" onclick="executePolicies()">执行政策</button>
-        <div id="result"></div>
-    </div>
+// 玩家数据
+let player = {
+    location: 'school',
+    affection: 0
+};
 
-    <script>
-        // 游戏状态初始化
-        let gameState = {
-            turn: 1,
-            money: 200,
-            energy: 150,
-            tech: 0,
-            population: 5000,
-            environment: 100,
-            infrastructure: 100,
-            reputation: 50
+// 场景数据
+const scenes = {
+    school: {
+        dialogue: '你在学校遇到了碇真嗣，他看起来有点紧张。',
+        choices: [
+            { text: '打招呼', next: 'greeting' },
+            { text: '无视他', next: 'ignore' }
+        ]
+    },
+    greeting: {
+        dialogue: '真嗣：你好……有什么我可以帮忙的吗？',
+        choices: [
+            { text: '聊一会儿', next: 'chat' },
+            { text: '离开', next: 'school' }
+        ]
+    },
+    chat: {
+        dialogue: '你们聊了一会儿，真嗣逐渐放松下来，露出微笑。',
+        effect: () => { player.affection += 10; },
+        choices: [
+            { text: '继续聊天', next: 'chat_more' },
+            { text: '离开', next: 'school' }
+        ]
+    },
+    chat_more: {
+        dialogue: '真嗣：和你聊天真的很开心……',
+        effect: () => { player.affection += 20; },
+        choices: [
+            { text: '约他出去', next: 'date' },
+            { text: '离开', next: 'school' }
+        ]
+    },
+    date: {
+        dialogue: '真嗣脸红了：好……好的，我很期待！',
+        effect: () => { player.affection += 30; },
+        choices: [
+            { text: '返回地图', next: 'school' }
+        ]
+    },
+    ignore: {
+        dialogue: '你无视了真嗣，他低头走开了。',
+        choices: [
+            { text: '返回地图', next: 'school' }
+        ]
+    },
+    nerv: {
+        dialogue: '你在NERV总部遇到了绫波丽，她冷冷地看着你。',
+        choices: [
+            { text: '尝试交谈', next: 'nerv_chat' },
+            { text: '离开', next: 'nerv' }
+        ]
+    },
+    nerv_chat: {
+        dialogue: '绫波丽：有什么事吗？',
+        effect: () => { player.affection += 5; },
+        choices: [
+            { text: '返回地图', next: 'nerv' }
+        ]
+    },
+    apartment: {
+        dialogue: '你在公寓里独自一人，感觉有点安静。',
+        choices: [
+            { text: '休息一下', next: 'rest' }
+        ]
+    },
+    rest: {
+        dialogue: '你休息了一会儿，感觉精力充沛。',
+        choices: [
+            { text: '返回地图', next: 'apartment' }
+        ]
+    }
+};
+
+// 显示对话
+function showDialogue(sceneKey) {
+    const scene = scenes[sceneKey];
+    document.getElementById('dialogue-text').innerText = scene.dialogue;
+
+    const choicesDiv = document.getElementById('choices');
+    choicesDiv.innerHTML = '';
+
+    scene.choices.forEach(choice => {
+        const button = document.createElement('button');
+        button.innerText = choice.text;
+        button.onclick = () => {
+            if (scene.effect) scene.effect(); // 执行效果（如增加好感度）
+            showDialogue(choice.next); // 显示下一场景
+            updateStatus(); // 更新状态栏
         };
+        choicesDiv.appendChild(button);
+    });
+}
 
-        // 政策定义
-        const policies = [
-            { name: "建造轨道太阳能阵列", description: "在地球轨道部署太阳能收集器，提供清洁能源。", effect: { money: -50, energy: 40, tech: 10, infrastructure: -10, environment: 15, population: 0, reputation: 0 }, risk: (state) => state.infrastructure < 20 ? { energy: 20 } : null },
-            { name: "深空探测计划", description: "发射探测器探索外太阳系，获取科学数据。", effect: { money: -30, energy: -15, tech: 25, reputation: 10, population: 0, environment: 0, infrastructure: 0 }, risk: (state) => state.tech < 50 && Math.random() < 0.2 ? { money: -30, energy: -15, tech: 0, reputation: -5 } : null },
-            { name: "移民激励法案", description: "通过福利政策鼓励人口增长。", effect: { money: -20, population: 200, environment: -10, reputation: 5, energy: 0, tech: 0, infrastructure: 0 }, risk: (state) => state.environment < 30 ? { population: 100 } : null },
-            { name: "核聚变研究项目", description: "开发核聚变技术，革新能源结构。", effect: { money: -60, energy: 50, tech: 30, infrastructure: -5, population: 0, environment: 0, reputation: 0 }, risk: (state) => state.money < 50 ? { tech: 10 } : null },
-            { name: "生态修复计划", description: "通过植树造林改善地球环境。", effect: { money: -25, energy: -10, environment: 25, reputation: 10, population: 0, tech: 0, infrastructure: 0 }, risk: null },
-            { name: "太空电梯建设", description: "建造连接地球和轨道的超级工程。", effect: { money: -80, energy: -20, tech: 20, infrastructure: 30, reputation: 15, population: 0, environment: 0 }, risk: (state) => state.infrastructure < 50 ? { money: -40, energy: -10 } : null },
-            { name: "国际合作峰会", description: "召集全球国家共同投资太空计划。", effect: { money: 20, tech: 15, reputation: 20, energy: -5, population: 0, environment: 0, infrastructure: 0 }, risk: (state) => state.reputation < 30 ? { money: 10, tech: 7, reputation: 10 } : null },
-            { name: "自动化采矿系统", description: "在月球和小行星部署机器人采矿。", effect: { money: -40, energy: 20, tech: 10, infrastructure: 15, population: 0, environment: 0, reputation: 0 }, risk: (state) => state.tech < 40 ? { energy: 10 } : null },
-            { name: "全民科技教育", description: "普及科学教育，提升人口素质。", effect: { money: -30, population: 50, tech: 20, environment: 5, reputation: 0, energy: 0, infrastructure: 0 }, risk: null },
-            { name: "星际殖民蓝图", description: "制定火星殖民计划，为未来铺路。", effect: { money: -100, energy: -30, tech: 40, population: -50, reputation: 25, environment: 0, infrastructure: 0 }, risk: (state) => Math.min(state.money, state.energy, state.tech, state.environment, state.infrastructure, state.reputation) < 50 ? { tech: 0, reputation: -20 } : null }
-        ];
+// 更新状态栏
+function updateStatus() {
+    document.getElementById('affection').innerText = player.affection;
+    document.getElementById('current-location').innerText = player.location;
+}
 
-        // 渲染政策选项
-        function renderPolicies() {
-            let policiesDiv = document.getElementById("policies");
-            policiesDiv.innerHTML = "<h2>选择政策（最多3个）</h2>";
-            policies.forEach((policy, index) => {
-                let label = document.createElement("label");
-                label.innerHTML = `<input type="checkbox" value="${index}"> <strong>${policy.name}</strong> - ${policy.description}<br>效果: 资金 ${policy.effect.money}, 能源 ${policy.effect.energy}, 科技 ${policy.effect.tech}, 人口 ${policy.effect.population}, 环境 ${policy.effect.environment}, 基础设施 ${policy.effect.infrastructure}, 声望 ${policy.effect.reputation}`;
-                policiesDiv.appendChild(label);
-            });
-        }
+// 地图点击事件
+document.querySelectorAll('.location').forEach(button => {
+    button.addEventListener('click', () => {
+        player.location = button.dataset.location;
+        showDialogue(player.location);
+        updateStatus();
+    });
+});
 
-        // 执行政策
-        function executePolicies() {
-            let selectedPolicies = Array.from(document.querySelectorAll("#policies input:checked")).map(input => parseInt(input.value));
-            if (selectedPolicies.length > 3) {
-                alert("最多只能选择3个政策！");
-                return;
-            }
-
-            let result = "执行结果：<br>";
-            let canExecute = true;
-            selectedPolicies.forEach(index => {
-                let policy = policies[index];
-                if (gameState.money + policy.effect.money < 0 || gameState.energy + policy.effect.energy < 0 || gameState.infrastructure + policy.effect.infrastructure < 0) {
-                    canExecute = false;
-                }
-            });
-
-            if (!canExecute) {
-                result += `<span class="warning">资源不足，无法执行所有政策！</span>`;
-            } else {
-                selectedPolicies.forEach(index => {
-                    let policy = policies[index];
-                    let effect = policy.effect;
-                    let riskEffect = policy.risk ? policy.risk(gameState) : null;
-
-                    if (riskEffect) {
-                        result += `<strong>${policy.name}</strong>: 项目遭遇风险，效果调整！<br>`;
-                        for (let key in riskEffect) {
-                            effect[key] = riskEffect[key];
-                        }
-                    } else {
-                        result += `<strong>${policy.name}</strong>: 执行成功！<br>`;
-                    }
-
-                    for (let key in effect) {
-                        gameState[key] += effect[key];
-                        result += `${key}: <span class="${effect[key] >= 0 ? 'increase' : 'decrease'}">${effect[key]}</span> `;
-                    }
-                    result += "<br>";
-                });
-
-                // 随机事件
-                if (Math.random() < 0.3) {
-                    let event = generateRandomEvent();
-                    result += `<span class="warning">随机事件：${event.description}</span><br>`;
-                    for (let key in event.effect) {
-                        gameState[key] += event.effect[key];
-                        result += `${key}: <span class="${event.effect[key] >= 0 ? 'increase' : 'decrease'}">${event.effect[key]}</span> `;
-                    }
-                    result += "<br>";
-                }
-
-                gameState.turn++;
-                checkGameEnd();
-            }
-
-            updateDisplay();
-            document.getElementById("result").innerHTML = result;
-        }
-
-        // 随机事件
-        function generateRandomEvent() {
-            const events = [
-                { description: "太阳风暴袭击，能源设施受损。", effect: { energy: -20, infrastructure: -10 } },
-                { description: "国际捐助增加，声望提升。", effect: { money: 30, reputation: 10 } },
-                { description: "技术突破，科研进度加快。", effect: { tech: 20 } }
-            ];
-            return events[Math.floor(Math.random() * events.length)];
-        }
-
-        // 检查游戏结束
-        function checkGameEnd() {
-            if (gameState.tech >= 200) {
-                alert("恭喜！你成功推动了太空探索事业，游戏胜利！");
-                document.getElementById("execute-button").disabled = true;
-            } else if (gameState.money <= 0 || gameState.energy <= 0 || gameState.environment <= 0 || gameState.infrastructure <= 0) {
-                alert("资源崩溃，游戏失败！");
-                document.getElementById("execute-button").disabled = true;
-            }
-        }
-
-        // 更新界面
-        function updateDisplay() {
-            document.getElementById("turn").textContent = gameState.turn;
-            document.getElementById("money").textContent = gameState.money;
-            document.getElementById("energy").textContent = gameState.energy;
-            document.getElementById("tech").textContent = gameState.tech;
-            document.getElementById("population").textContent = gameState.population;
-            document.getElementById("environment").textContent = gameState.environment;
-            document.getElementById("infrastructure").textContent = gameState.infrastructure;
-            document.getElementById("reputation").textContent = gameState.reputation;
-        }
-
-        // 初始化
-        renderPolicies();
-        updateDisplay();
-    </script>
-</body>
-</html>
+// 初始化游戏
+showDialogue(player.location);
+updateStatus();
